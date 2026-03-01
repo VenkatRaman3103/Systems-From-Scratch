@@ -1,44 +1,102 @@
 #include <assert.h>
 #include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <unistd.h>
 
-#define HEAP_CAPACITY 640000 // upper bound
+typedef struct Block {
+    size_t size;
+    int isFree;
 
-char heap[HEAP_CAPACITY] = {0};
+    struct Block *next;
 
-size_t heap_size = 0;
+} Block;
 
-// malloc(size_t <size>)
-void *heap_alloc(size_t size) {
+// head of the blocks
+Block *head = NULL;
 
-    assert((heap_size + size) <= HEAP_CAPACITY);
+// utils
+Block *request_space(size_t size) {
+    Block *block = sbrk(0);
+
+    void *request = sbrk(sizeof(Block) + size);
+
+    if (request == (void *)-1) {
+        return NULL;
+    }
+
+    block->size = size;
+    block->isFree = 0;
+    block->next = NULL;
+
+    return block;
+}
+
+// find free block
+Block *find_free_block(size_t size) {
+    Block *curr = head;
+
+    while (curr != NULL) {
+        if (curr->isFree == 1 && curr->size >= size) {
+            return curr;
+        }
+
+        curr = curr->next;
+    }
+
     return NULL;
 }
 
-void rough() {
-    int window = 2;
+// malloc
+void *my_malloc(size_t size) {
+    if (size <= 0) {
+        return NULL;
+    }
 
-    char string[] = "Hello world";
-    int stringLength = sizeof(string);
-    printf("%d\n", stringLength);
+    Block *block;
 
-    for (int i = 0; i < stringLength - window; i++) {
-        printf("%c\n", string[i]);
+    if (head == NULL) {
+        block = request_space(size);
 
-        for (int j = i; j < i + window; j++) {
-            printf("%c", string[j]);
+        if (block == NULL) {
+            return NULL;
         }
 
-        printf("\n");
+        head = block;
+    } else {
+        block = find_free_block(size);
+
+        if (block == NULL) {
+            Block *curr = head;
+
+            while (curr->next != NULL) {
+                curr = curr->next;
+            }
+
+            block = request_space(size);
+
+            if (block == NULL) {
+                return NULL;
+            }
+
+            curr->next = block;
+        } else {
+            block->isFree = 0;
+        }
     }
+
+    return (block + 1);
+}
+
+void free_my_malloc(void *ptr) {
+    if (ptr == NULL) {
+        return;
+    }
+
+    Block *block = (Block *)ptr - 1;
+    block->isFree = 1;
 }
 
 int main() {
-
-    heap_alloc(20);
-
-    rough();
+    //
 
     return 0;
 }
