@@ -2,6 +2,8 @@
 #include <stddef.h>
 #include <unistd.h>
 
+#define ALIGN(x) (((x) + 7) & ~7)
+
 typedef struct Block {
     size_t size;
     int isFree;
@@ -13,7 +15,7 @@ typedef struct Block {
 // head of the blocks
 Block *head = NULL;
 
-// utils
+// UTILS
 Block *request_space(size_t size) {
     Block *block = sbrk(0);
 
@@ -45,13 +47,29 @@ Block *find_free_block(size_t size) {
     return NULL;
 }
 
-// malloc
+// splitting
+void block_splitting(Block *block, size_t size) {
+    Block *new_block = (Block *)((char *)(block + 1) + size);
+
+    new_block->size = block->size - size - sizeof(Block);
+    new_block->next = block->next;
+    new_block->isFree = 1;
+
+    block->size = size;
+    block->next = new_block;
+
+    return;
+}
+
+// MALLOC
 void *my_malloc(size_t size) {
     if (size <= 0) {
         return NULL;
     }
 
     Block *block;
+
+    size = ALIGN(size);
 
     if (head == NULL) {
         block = request_space(size);
@@ -79,6 +97,10 @@ void *my_malloc(size_t size) {
 
             curr->next = block;
         } else {
+            if (block->size >= size + sizeof(Block) + 8) {
+                block_splitting(block, size);
+            }
+
             block->isFree = 0;
         }
     }
@@ -96,7 +118,10 @@ void free_my_malloc(void *ptr) {
 }
 
 int main() {
-    //
+    int *block_1 = my_malloc(200);
+    free_my_malloc(block_1);
+    int *block_2 = my_malloc(100);
+    int *block_3 = my_malloc(50);
 
     return 0;
 }
