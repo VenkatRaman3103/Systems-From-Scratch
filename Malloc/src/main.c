@@ -63,11 +63,9 @@ void block_splitting(Block *block, size_t size) {
 
 // coalesce
 void coalesce(Block *block) {
-    while (block->next) {
-        if (block->next->isFree) {
-            block->size = sizeof(Block) + block->next->size;
-            block->next = block->next->next;
-        }
+    while (block->next && block->next->isFree) {
+        block->size += sizeof(Block) + block->next->size;
+        block->next = block->next->next;
     }
 }
 
@@ -129,13 +127,10 @@ void free_my_malloc(void *ptr) {
     coalesce(block);
 
     // backward
-
     Block *curr = head;
 
-    while (curr->next != NULL) {
-        if (curr->next != block) {
-            curr = curr->next;
-        }
+    while (curr->next != NULL && curr->next != block) {
+        curr = curr->next;
     }
 
     if (curr != NULL && curr->isFree == 1) {
