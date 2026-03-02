@@ -1,11 +1,15 @@
-import { createElement } from "./engine.js";
+import { createElement, render } from "./engine.js";
 
 const element = createElement(
   "h1",
-  null,
+  { id: "some" },
   "Hello",
   createElement("h2", null, "world"),
   createElement("p", null, "description"),
 );
 
-console.log(JSON.stringify(element, null, 2));
+const containder = document.getElementById("root");
+
+render(element, containder);
+
+// console.log(JSON.stringify(element, null, 2));
