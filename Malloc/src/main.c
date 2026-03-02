@@ -1,5 +1,7 @@
+#define _DEFAULT_SOURCE
 #include <assert.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -194,11 +196,47 @@ void free_my_malloc(void *ptr) {
     }
 }
 
+void print_heap() {
+    Block *curr = head;
+    printf("Heap blocks:\n");
+    while (curr) {
+        printf(" [%s %zu]", curr->isFree ? "free" : "used", curr->size);
+        curr = curr->next;
+    }
+    printf("\n");
+}
+
 int main() {
-    int *block_1 = my_malloc(200);
-    free_my_malloc(block_1);
-    int *block_2 = my_malloc(100);
-    int *block_3 = my_malloc(50);
+    int *a = my_malloc(200);
+    print_heap();
+
+    int *b = my_malloc(100);
+    print_heap();
+
+    int *c = my_malloc(50);
+    print_heap();
+
+    printf("\nFreeing b...\n");
+    free_my_malloc(b);
+    print_heap();
+
+    printf("\nRealloc c to 120 (grow)...\n");
+    c = my_realloc(c, 120);
+    print_heap();
+
+    printf("\nRealloc a to 100 (shrink)...\n");
+    a = my_realloc(a, 100);
+    print_heap();
+
+    printf("\nAllocating d = 80...\n");
+    int *d = my_malloc(80);
+    print_heap();
+
+    printf("\nFreeing all...\n");
+    free_my_malloc(a);
+    free_my_malloc(c);
+    free_my_malloc(d);
+    print_heap();
 
     return 0;
 }
