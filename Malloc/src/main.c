@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stddef.h>
+#include <string.h>
 #include <unistd.h>
 
 #define ALIGN(x) (((x) + 7) & ~7)
@@ -11,6 +12,8 @@ typedef struct Block {
     struct Block *next;
 
 } Block;
+
+void free_my_malloc(void *ptr);
 
 // head of the blocks
 Block *head = NULL;
@@ -116,6 +119,59 @@ void *my_malloc(size_t size) {
     return (block + 1);
 }
 
+// REALLOC
+void *my_realloc(void *ptr, size_t new_size) {
+    if (ptr == NULL) {
+        return my_malloc(new_size);
+    }
+
+    if (new_size == 0) {
+        free_my_malloc(ptr);
+        return NULL;
+    }
+
+    Block *block = (Block *)ptr - 1;
+
+    // shrink
+    if (block->size >= new_size) {
+        if (block->size >= new_size + sizeof(Block) + 8) {
+            block_splitting(block, new_size);
+        }
+
+        return ptr;
+    }
+
+    // grow
+    // merge with next block if possible
+    Block *nextBlock = block->next;
+
+    if (nextBlock && nextBlock->isFree == 1 &&
+        block->size + sizeof(Block) + nextBlock->size >= new_size) {
+
+        coalesce(block);
+
+        if (block->size >= new_size + sizeof(Block) + 8) {
+            block_splitting(block, new_size);
+        }
+
+        return ptr;
+    }
+
+    // creat a new block and copy the content
+    void *new_ptr = my_malloc(new_size);
+    if (!new_ptr) {
+        return NULL;
+    }
+
+    size_t copy_size = block->size < new_size ? block->size : new_size;
+    memcpy(new_ptr, ptr, copy_size);
+
+    free_my_malloc(ptr);
+
+    return new_ptr;
+}
+
+// free
 void free_my_malloc(void *ptr) {
     if (ptr == NULL) {
         return;
