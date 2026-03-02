@@ -5,11 +5,17 @@
 #include <string.h>
 #include <unistd.h>
 
+#define MAX_ROOTS 100
 #define ALIGN(x) (((x) + 7) & ~7)
+
+void mark();
+void sweap();
 
 typedef struct Block {
     size_t size;
     int isFree;
+
+    int marked;
 
     struct Block *next;
 
@@ -19,6 +25,23 @@ void free_my_malloc(void *ptr);
 
 // head of the blocks
 Block *head = NULL;
+
+// roots
+void *roots[MAX_ROOTS];
+int root_count = 0;
+
+void add_root(void *ptr) { roots[root_count++] = ptr; }
+
+void remove_root(void *ptr) {
+    for (int i = 0; i < root_count; i++) {
+        if (roots[i] == ptr) {
+            roots[i] = roots[--root_count];
+            return;
+        }
+    }
+}
+
+void clear_roots() { root_count = 0; }
 
 // UTILS
 Block *request_space(size_t size) {
@@ -32,6 +55,7 @@ Block *request_space(size_t size) {
 
     block->size = size;
     block->isFree = 0;
+    block->marked = 0;
     block->next = NULL;
 
     return block;
@@ -83,6 +107,15 @@ void *my_malloc(size_t size) {
     Block *block;
 
     size = ALIGN(size);
+
+    block = find_free_block(size);
+
+    if (block == NULL) {
+        mark();
+        sweap();
+
+        block = find_free_block(size);
+    }
 
     if (head == NULL) {
         block = request_space(size);
@@ -173,7 +206,7 @@ void *my_realloc(void *ptr, size_t new_size) {
     return new_ptr;
 }
 
-// free
+// FREE
 void free_my_malloc(void *ptr) {
     if (ptr == NULL) {
         return;
@@ -193,6 +226,43 @@ void free_my_malloc(void *ptr) {
 
     if (curr != NULL && curr->isFree == 1) {
         coalesce(curr);
+    }
+}
+
+// GC
+// mark
+void mark() {
+    for (int i = 0; i < root_count; i++) {
+        if (roots[i] == NULL) {
+            continue;
+        }
+
+        Block *block = (Block *)roots[i] - 1;
+
+        if (block->isFree == 0) {
+            block->marked = 1;
+        }
+    }
+}
+
+// sweap
+void sweap() {
+    Block *curr = head;
+
+    while (curr) {
+        if (curr->isFree == 0) {
+            if (curr->marked == 0) {
+                curr->isFree = 1;
+            } else {
+                curr->marked = 0;
+            }
+        }
+
+        if (curr->isFree == 1) {
+            coalesce(curr);
+        }
+
+        curr = curr->next;
     }
 }
 
