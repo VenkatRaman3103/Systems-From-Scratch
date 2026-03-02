@@ -206,7 +206,7 @@ void *my_realloc(void *ptr, size_t new_size) {
     return new_ptr;
 }
 
-// FREE
+// Free
 void free_my_malloc(void *ptr) {
     if (ptr == NULL) {
         return;
@@ -229,7 +229,7 @@ void free_my_malloc(void *ptr) {
     }
 }
 
-// GC
+// GARBAGE COLLECTOR
 // mark
 void mark() {
     for (int i = 0; i < root_count; i++) {
