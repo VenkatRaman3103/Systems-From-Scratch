@@ -9,7 +9,7 @@
 #define ALIGN(x) (((x) + 7) & ~7)
 
 void mark();
-void sweap();
+void sweep();
 
 typedef struct Block {
     size_t size;
@@ -112,7 +112,7 @@ void *my_malloc(size_t size) {
 
     if (block == NULL) {
         mark();
-        sweap();
+        sweep();
 
         block = find_free_block(size);
     }
@@ -245,8 +245,8 @@ void mark() {
     }
 }
 
-// sweap
-void sweap() {
+// sweep
+void sweep() {
     Block *curr = head;
 
     while (curr) {
