@@ -44,7 +44,6 @@ export function updatedDom(dom, prevProps, nextProps) {
   Object.keys(prevProps || {})
     .filter((key) => key != "children")
     .forEach((name) => {
-      console.log(name);
       dom[name] = "";
     });
 
@@ -52,7 +51,6 @@ export function updatedDom(dom, prevProps, nextProps) {
   Object.keys(nextProps || {})
     .filter((key) => key != "children")
     .forEach((name) => {
-      console.log(name);
       dom[name] = nextProps[name];
     });
 }
@@ -82,8 +80,6 @@ export function render(element, container) {
 // SCHEDULER
 export function workLoop(deadline) {
   let shouldYield = false;
-
-  console.log(deadline);
 
   while (nextUnitOfWork && !shouldYield) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
