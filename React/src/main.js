@@ -1,14 +1,21 @@
-import { createElement, render } from "./engine.js";
+import { createElement, render, useState } from "./engine.js";
 
-const container = document.getElementById("root");
+function Counter() {
+  const [count, setCount] = useState(0);
 
-function App() {
   return createElement(
     "div",
     null,
-    createElement("h1", null, "Hello"),
-    createElement("p", null, "World"),
+    createElement("h1", null, count),
+    createElement(
+      "button",
+      {
+        onclick: () => setCount((c) => c + 1),
+      },
+      "Increment",
+    ),
   );
 }
 
-render(createElement(App, null), container);
+const container = document.getElementById("root");
+render(createElement(Counter, null), container);
