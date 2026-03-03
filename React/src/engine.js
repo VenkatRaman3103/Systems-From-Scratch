@@ -57,12 +57,91 @@ export function updatedDom(dom, prevProps, nextProps) {
     });
 }
 
-export function render(vnode, container) {
-  let dom = createDomNode(vnode);
+// FIBER
+let nextUnitOfWork = null;
+let wipRoot = null;
 
-  vnode.props.children.forEach((child) => {
-    render(child, dom);
-  });
+export function render(element, container) {
+  wipRoot = {
+    dom: container,
+    props: {
+      children: [element],
+    },
+    parent: null,
+    child: null,
+    sibling: null,
+  };
 
-  container.appendChild(dom);
+  nextUnitOfWork = wipRoot;
+}
+
+// SCHEDULER
+export function workLoop(deadline) {
+  let shouldYield = false;
+
+  console.log(deadline);
+
+  while (nextUnitOfWork && !shouldYield) {
+    nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
+    shouldYield = deadline.timeRemaining() < 1;
+  }
+
+  if (!nextUnitOfWork && wipRoot) {
+    commitRoot();
+  }
+
+  requestIdleCallback(workLoop);
+}
+
+requestIdleCallback(workLoop);
+
+// PERFORM UNIT OF WORK
+export function performUnitOfWork(fiber) {
+  if (!fiber.dom) {
+    fiber.dom = createDomNode(fiber);
+  }
+
+  let elements = fiber.props.children || [];
+  let prevSibling = null;
+  let index = 0;
+
+  while (index < elements.length) {
+    let element = elements[index];
+
+    let newFiber = {
+      type: element.type,
+      props: element.props,
+      parent: fiber,
+      dom: null,
+      child: null,
+      sibling: null,
+    };
+
+    if (index == 0) {
+      fiber.child = newFiber;
+    } else {
+      prevSibling.sibling = newFiber;
+    }
+
+    prevSibling = newFiber;
+
+    index++;
+  }
+
+  if (fiber.child) {
+    return fiber.child;
+  }
+
+  let nextFiber = fiber;
+  while (nextFiber) {
+    if (nextFiber.sibling) return nextFiber.sibling;
+    nextFiber = nextFiber.parent;
+  }
+
+  return null;
+}
+
+// COMMIT
+export function commitRoot() {
+  //
 }
