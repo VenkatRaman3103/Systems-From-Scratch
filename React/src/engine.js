@@ -30,7 +30,7 @@ export function createDomNode(fiber) {
   }
 
   let dom =
-    vnode.type == "TEXT_ELEMENT"
+    fiber.type == "TEXT_ELEMENT"
       ? document.createTextNode(fiber.props.nodeValue)
       : document.createElement(fiber.type);
 
@@ -53,7 +53,7 @@ export function updatedDom(dom, prevProps, nextProps) {
     .filter((key) => key != "children")
     .forEach((name) => {
       console.log(name);
-      dom[name] = nextProps.props[name];
+      dom[name] = nextProps[name];
     });
 }
 
@@ -143,5 +143,24 @@ export function performUnitOfWork(fiber) {
 
 // COMMIT
 export function commitRoot() {
-  //
+  commitWork(wipRoot.child);
+  wipRoot = null;
+}
+
+export function commitWork(fiber) {
+  if (!fiber) return;
+
+  let domParentFiber = fiber.parent;
+  while (!domParentFiber.dom) {
+    domParentFiber = domParentFiber.parent;
+  }
+
+  const domParent = domParentFiber.dom;
+
+  if (fiber.dom) {
+    domParent.appendChild(fiber.dom);
+  }
+
+  commitWork(fiber.child);
+  commitWork(fiber.sibling);
 }
