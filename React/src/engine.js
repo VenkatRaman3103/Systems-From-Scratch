@@ -60,6 +60,8 @@ export function updatedDom(dom, prevProps, nextProps) {
 // FIBER
 let nextUnitOfWork = null;
 let wipRoot = null;
+let currentRoot = null;
+let deletions = null;
 
 export function render(element, container) {
   wipRoot = {
@@ -67,11 +69,10 @@ export function render(element, container) {
     props: {
       children: [element],
     },
-    parent: null,
-    child: null,
-    sibling: null,
+    alternate: currentRoot,
   };
 
+  deletions = [];
   nextUnitOfWork = wipRoot;
 }
 
@@ -103,31 +104,7 @@ export function performUnitOfWork(fiber) {
   }
 
   let elements = fiber.props.children || [];
-  let prevSibling = null;
-  let index = 0;
-
-  while (index < elements.length) {
-    let element = elements[index];
-
-    let newFiber = {
-      type: element.type,
-      props: element.props,
-      parent: fiber,
-      dom: null,
-      child: null,
-      sibling: null,
-    };
-
-    if (index == 0) {
-      fiber.child = newFiber;
-    } else {
-      prevSibling.sibling = newFiber;
-    }
-
-    prevSibling = newFiber;
-
-    index++;
-  }
+  reconcileChildren(fiber, elements);
 
   if (fiber.child) {
     return fiber.child;
@@ -146,13 +123,72 @@ export function performUnitOfWork(fiber) {
   return null;
 }
 
+// RECONCILE
+function reconcileChildren(wipFiber, elements) {
+  let index = 0;
+  let prevSibling = null;
+  let oldFiber = wipFiber.alternate && wipFiber.alternate.child;
+
+  while (index < elements.length || oldFiber != null) {
+    const element = elements[index];
+    let newFiber = null;
+
+    const sameType = oldFiber && element && element.type === oldFiber.type;
+
+    // update
+    if (sameType) {
+      newFiber = {
+        type: oldFiber.type,
+        props: element.props,
+        dom: oldFiber.dom,
+        parent: wipFiber,
+        alternate: oldFiber,
+        effectTag: "UPDATE",
+      };
+    }
+
+    // placement
+    if (element && !sameType) {
+      newFiber = {
+        type: element.type,
+        props: element.props,
+        dom: null,
+        parent: wipFiber,
+        alternate: null,
+        effectTag: "PLACEMENT",
+      };
+    }
+
+    // deletion
+    if (oldFiber && !sameType) {
+      oldFiber.effectTag = "DELETION";
+      deletions.push(oldFiber);
+    }
+
+    if (oldFiber) {
+      oldFiber = oldFiber.sibling;
+    }
+
+    if (index === 0) {
+      wipFiber.child = newFiber;
+    } else if (element) {
+      prevSibling.sibling = newFiber;
+    }
+
+    prevSibling = newFiber;
+    index++;
+  }
+}
+
 // COMMIT
 export function commitRoot() {
+  deletions.forEach(commitWork);
   commitWork(wipRoot.child);
+  currentRoot = wipRoot;
   wipRoot = null;
 }
 
-export function commitWork(fiber) {
+function commitWork(fiber) {
   if (!fiber) return;
 
   let domParentFiber = fiber.parent;
@@ -162,10 +198,22 @@ export function commitWork(fiber) {
 
   const domParent = domParentFiber.dom;
 
-  if (fiber.dom) {
+  if (fiber.effectTag === "PLACEMENT" && fiber.dom != null) {
     domParent.appendChild(fiber.dom);
+  } else if (fiber.effectTag === "UPDATE" && fiber.dom != null) {
+    updatedDom(fiber.dom, fiber.alternate.props, fiber.props);
+  } else if (fiber.effectTag === "DELETION") {
+    commitDeletion(fiber, domParent);
   }
 
   commitWork(fiber.child);
   commitWork(fiber.sibling);
+}
+
+function commitDeletion(fiber, domParent) {
+  if (fiber.dom) {
+    domParent.removeChild(fiber.dom);
+  } else {
+    commitDeletion(fiber.child, domParent);
+  }
 }
