@@ -97,6 +97,7 @@ requestIdleCallback(workLoop);
 
 // PERFORM UNIT OF WORK
 export function performUnitOfWork(fiber) {
+  // container
   if (!fiber.dom) {
     fiber.dom = createDomNode(fiber);
   }
@@ -133,8 +134,12 @@ export function performUnitOfWork(fiber) {
   }
 
   let nextFiber = fiber;
+
   while (nextFiber) {
-    if (nextFiber.sibling) return nextFiber.sibling;
+    if (nextFiber.sibling) {
+      return nextFiber.sibling;
+    }
+
     nextFiber = nextFiber.parent;
   }
 
