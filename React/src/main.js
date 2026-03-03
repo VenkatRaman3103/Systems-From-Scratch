@@ -1,20 +1,14 @@
 import { createElement, render } from "./engine.js";
 
-const element = createElement(
-  "div",
-  { id: "app" },
-  createElement("h1", null, "Hello Fiber"),
-  createElement("p", null, "world"),
-);
-
 const container = document.getElementById("root");
 
-render(
-  createElement(
+function App() {
+  return createElement(
     "div",
     null,
-    createElement("p", null, "A"),
-    createElement("p", null, "B"),
-  ),
-  container,
-);
+    createElement("h1", null, "Hello"),
+    createElement("p", null, "World"),
+  );
+}
+
+render(createElement(App, null), container);

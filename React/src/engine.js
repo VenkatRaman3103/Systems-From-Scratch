@@ -98,13 +98,13 @@ requestIdleCallback(workLoop);
 
 // PERFORM UNIT OF WORK
 export function performUnitOfWork(fiber) {
-  // container
-  if (!fiber.dom) {
-    fiber.dom = createDomNode(fiber);
-  }
+  let isFunctionalComponent = typeof fiber.type == "function";
 
-  let elements = fiber.props.children || [];
-  reconcileChildren(fiber, elements);
+  if (isFunctionalComponent) {
+    updateFunctionalComponent(fiber);
+  } else {
+    updateHostComponent(fiber);
+  }
 
   if (fiber.child) {
     return fiber.child;
@@ -121,6 +121,21 @@ export function performUnitOfWork(fiber) {
   }
 
   return null;
+}
+
+export function updateHostComponent(fiber) {
+  // container
+  if (!fiber.dom) {
+    fiber.dom = createDomNode(fiber);
+  }
+
+  let elements = fiber.props.children || [];
+  reconcileChildren(fiber, elements);
+}
+
+export function updateFunctionalComponent(fiber) {
+  let children = [fiber.type(fiber.props)];
+  reconcileChildren(fiber, children);
 }
 
 // RECONCILE
