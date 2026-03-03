@@ -1,3 +1,4 @@
+// VIRTUAL DOM
 export function createTextElement(text) {
   return {
     type: "TEXT_ELEMENT",
@@ -22,21 +23,38 @@ export function createElement(type, props, ...children) {
   };
 }
 
-export function createDomNode(vnode) {
-  if (vnode.type == "TEXT_ELEMENT") {
-    return document.createTextNode(vnode.props.nodeValue);
+// REAL DOM
+export function createDomNode(fiber) {
+  if (fiber.type == "TEXT_ELEMENT") {
+    return document.createTextNode(fiber.props.nodeValue);
   }
 
-  let dom = document.createElement(vnode.type);
+  let dom =
+    vnode.type == "TEXT_ELEMENT"
+      ? document.createTextNode(fiber.props.nodeValue)
+      : document.createElement(fiber.type);
 
-  Object.keys(vnode.props || {})
+  updatedDom(dom, {}, fiber.props);
+
+  return dom;
+}
+
+export function updatedDom(dom, prevProps, nextProps) {
+  // remove old props
+  Object.keys(prevProps || {})
     .filter((key) => key != "children")
     .forEach((name) => {
       console.log(name);
-      dom[name] = vnode.props[name];
+      dom[name] = "";
     });
 
-  return dom;
+  // add new props
+  Object.keys(nextProps || {})
+    .filter((key) => key != "children")
+    .forEach((name) => {
+      console.log(name);
+      dom[name] = nextProps.props[name];
+    });
 }
 
 export function render(vnode, container) {
