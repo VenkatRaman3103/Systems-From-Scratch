@@ -273,3 +273,19 @@ export function useState(initial) {
 
   return [hook.state, setState];
 }
+
+// HTML formatter
+export function html(htmlobj) {
+  const tag = Object.keys(htmlobj)[0];
+  const { prop, children } = htmlobj[tag];
+
+  const formattedChildren = children.map((child) => {
+    if (typeof child === "string" || typeof child === "number") {
+      return child;
+    }
+
+    return html(child);
+  });
+
+  return createElement(tag, prop, ...formattedChildren);
+}
