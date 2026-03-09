@@ -84,7 +84,7 @@ int main() {
 
     FILE *file;
 
-    file = fopen("test.unn", "r");
+    file = fopen("test.lg", "r");
 
     if (file == NULL) {
         printf("Failed to open file\n");
