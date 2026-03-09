@@ -33,26 +33,20 @@ typedef struct {
 
 } Token;
 
-TokenLiteral generat_number(char curr, FILE *file) {
-    TokenLiteral token;
-    token.type = INT;
+TokenLiteral *generat_number(int curr, FILE *file) {
+    TokenLiteral *token = malloc(sizeof(TokenLiteral));
+    token->type = INT;
 
     int val = 0;
 
     while (isdigit(curr) && curr != EOF) {
-        if (!isdigit(curr)) {
-            break;
-        }
-
         val = (val * 10) + (curr - '0');
-        printf("%d\n", (curr - '0'));
-
         curr = fgetc(file);
     }
 
     ungetc(curr, file);
 
-    token.value = val;
+    token->value = val;
 
     return token;
 }
@@ -69,8 +63,8 @@ void lexer(FILE *file) {
         } else if (curr == ')') {
             printf("found CLOSE_PAREN\n");
         } else if (isdigit(curr)) {
-            TokenLiteral test_token = generat_number(curr, file);
-            printf("test_toke: %d\n", test_token.value);
+            TokenLiteral *test_token = generat_number(curr, file);
+            printf("test_toke: %d\n", test_token->value);
         } else if (isalpha(curr)) {
             printf("found CHARACTER: %c\n", curr);
         }
