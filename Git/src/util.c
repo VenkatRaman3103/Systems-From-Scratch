@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 char *read_file(const char *path, size_t *size_out) {
     FILE *f = fopen(path, "rb");
@@ -16,4 +17,9 @@ char *read_file(const char *path, size_t *size_out) {
 
     *size_out = size;
     return buffer;
+}
+
+int create_dir(const char *path) {
+    //
+    return mkdir(path, 0755);
 }

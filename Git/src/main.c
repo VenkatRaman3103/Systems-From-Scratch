@@ -1,3 +1,4 @@
+#include "../include/util.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -9,13 +10,26 @@ typedef struct {
 } Command;
 
 int cmd_init(int argc, char *argv[]) {
-    printf("Initialized empty repository\n");
+    create_dir(".mygit");
+    create_dir(".mygit/objects");
+    create_dir(".mygit/refs");
+
+    FILE *head = fopen(".mygit/HEAD", "w");
+    if (!head) {
+        perror("HEAD");
+        return 1;
+    }
+
+    fprintf(head, "ref: refs/heads/main\n");
+    fclose(head);
+
+    printf("Initialized empty Git repository\n");
     return 0;
 }
 
 int cmd_hash_object(int argc, char *argv[]) {
     if (argc < 3) {
-        printf("Usage: git hash-object <file>\n");
+        printf("Usage: mygit hash-object <file>\n");
         return 1;
     }
 
@@ -30,7 +44,7 @@ Command commands[] = {
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        printf("Usage: git <command>\n");
+        printf("Usage: mygit <command>\n");
         return 1;
     }
 
