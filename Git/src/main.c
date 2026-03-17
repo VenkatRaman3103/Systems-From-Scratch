@@ -14,6 +14,8 @@ typedef struct {
 } Command;
 
 int cmd_write_tree(int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
 
     TreeEntry entries[1];
 
@@ -100,6 +102,9 @@ int cmd_cat_file(int argc, char *argv[]) {
 }
 
 int cmd_init(int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
+
     create_dir(".mygit");
     create_dir(".mygit/objects");
     create_dir(".mygit/refs");
@@ -167,6 +172,8 @@ int cmd_hash_object(int argc, char *argv[]) {
     // Write object
     if (write_file(fullpath, store, total_size) != 0) {
         perror("write_file");
+        free(content);
+        free(store);
         return 1;
     }
 
