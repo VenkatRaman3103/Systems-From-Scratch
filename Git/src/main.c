@@ -12,6 +12,51 @@ typedef struct {
     command_fn fn;
 } Command;
 
+int cmd_cat_file(int argc, char *argv[]) {
+    if (argc < 3) {
+        printf("Usage: git cat-file <hash>\n");
+        return 1;
+    }
+
+    const char *hash = argv[2];
+
+    // Split hash
+    char dir[3];
+    strncpy(dir, hash, 2);
+    dir[2] = '\0';
+
+    const char *file = hash + 2;
+
+    // Build path
+    char path[300];
+    sprintf(path, ".mygit/objects/%s/%s", dir, file);
+
+    size_t size;
+    char *data = read_file_exact(path, &size);
+    if (!data) {
+        perror("read object");
+        return 1;
+    }
+
+    // Find null separator
+    char *content = memchr(data, '\0', size);
+    if (!content) {
+        printf("Invalid object format\n");
+        free(data);
+        return 1;
+    }
+
+    content++; // move past '\0'
+
+    size_t content_size = size - (content - data);
+
+    fwrite(content, 1, content_size, stdout);
+    printf("\n");
+
+    free(data);
+    return 0;
+}
+
 int cmd_init(int argc, char *argv[]) {
     create_dir(".mygit");
     create_dir(".mygit/objects");
@@ -93,6 +138,7 @@ int cmd_hash_object(int argc, char *argv[]) {
 Command commands[] = {
     {"init", cmd_init},
     {"hash-object", cmd_hash_object},
+    {"cat-file", cmd_cat_file},
 };
 
 int main(int argc, char *argv[]) {
