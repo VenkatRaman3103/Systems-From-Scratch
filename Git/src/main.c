@@ -1,4 +1,5 @@
 #include "../include/hash.h"
+#include "../include/tree.h"
 #include "../include/util.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +12,47 @@ typedef struct {
     const char *name;
     command_fn fn;
 } Command;
+
+int cmd_write_tree(int argc, char *argv[]) {
+
+    TreeEntry entries[1];
+
+    entries[0].name = "test.txt";
+
+    unsigned char hash[20];
+    // read the file and hash as blob
+    size_t size;
+    char *content = read_file(entries[0].name, &size);
+    if (!content) {
+        perror("read_file");
+        return 1;
+    }
+
+    // prepare blob object
+    char header[64];
+    int header_len = sprintf(header, "blob %zu", size) + 1;
+    size_t total_size = header_len + size;
+    unsigned char *store = malloc(total_size);
+    memcpy(store, header, header_len);
+    memcpy(store + header_len, content, size);
+
+    sha1_hash(store, total_size, hash);
+
+    memcpy(entries[0].hash, hash, 20);
+    entries[0].mode = MODE_FILE;
+
+    free(store);
+    free(content);
+
+    // write tree object
+    char *tree_hex = write_tree(entries, 1);
+    if (!tree_hex)
+        return 1;
+
+    printf("%s\n", tree_hex);
+    free(tree_hex);
+    return 0;
+}
 
 int cmd_cat_file(int argc, char *argv[]) {
     if (argc < 3) {
@@ -139,6 +181,7 @@ Command commands[] = {
     {"init", cmd_init},
     {"hash-object", cmd_hash_object},
     {"cat-file", cmd_cat_file},
+    {"write-tree", cmd_write_tree},
 };
 
 int main(int argc, char *argv[]) {
