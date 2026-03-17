@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -std=c11
 TARGET = build/mygit
 
-SRC = src/main.c src/util.c src/hash.c src/tree.c
+SRC = src/main.c src/util.c src/hash.c src/tree.c src/commit.c
 LIBS = -lssl -lcrypto
 
 all:

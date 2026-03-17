@@ -3,8 +3,8 @@
 
 #include <stddef.h>
 
-#define MODE_FILE 100644
-#define MODE_DIR 40000
+#define MODE_FILE 0100644
+#define MODE_DIR 0040000
 
 typedef struct {
     char *name;
@@ -12,6 +12,7 @@ typedef struct {
     int mode;
 } TreeEntry;
 
-char *write_tree(TreeEntry *entries, size_t n); // returns hash as hex
+char *write_tree(TreeEntry *entries, size_t n);
+char *write_tree_dir(const char *dirpath);
 
 #endif
