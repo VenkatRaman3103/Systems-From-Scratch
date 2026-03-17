@@ -23,3 +23,13 @@ int create_dir(const char *path) {
     //
     return mkdir(path, 0755);
 }
+
+int write_file(const char *path, const void *data, size_t size) {
+    FILE *f = fopen(path, "wb");
+    if (!f)
+        return -1;
+
+    fwrite(data, 1, size, f);
+    fclose(f);
+    return 0;
+}

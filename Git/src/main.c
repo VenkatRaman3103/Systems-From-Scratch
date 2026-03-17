@@ -1,6 +1,9 @@
+#include "../include/hash.h"
 #include "../include/util.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 typedef int (*command_fn)(int argc, char *argv[]);
 
@@ -29,11 +32,61 @@ int cmd_init(int argc, char *argv[]) {
 
 int cmd_hash_object(int argc, char *argv[]) {
     if (argc < 3) {
-        printf("Usage: mygit hash-object <file>\n");
+        printf("Usage: git hash-object <file>\n");
         return 1;
     }
 
-    printf("Hashing file: %s\n", argv[2]);
+    size_t size;
+    char *content = read_file(argv[2], &size);
+    if (!content) {
+        perror("read_file");
+        return 1;
+    }
+
+    // Build Git blob: "blob <size>\0<data>"
+    char header[64];
+    int header_len = sprintf(header, "blob %zu", size) + 1;
+
+    size_t total_size = header_len + size;
+    unsigned char *store = malloc(total_size);
+
+    memcpy(store, header, header_len);
+    memcpy(store + header_len, content, size);
+
+    // Hash
+    unsigned char hash[20];
+    sha1_hash(store, total_size, hash);
+
+    char hex[41];
+    hash_to_hex(hash, hex);
+    hex[40] = '\0';
+
+    // Split hash
+    char dir[3];
+    strncpy(dir, hex, 2);
+    dir[2] = '\0';
+
+    const char *file = hex + 2;
+
+    // Create directory path
+    char path[256];
+    sprintf(path, ".mygit/objects/%s", dir);
+    mkdir(path, 0755);
+
+    // Full file path
+    char fullpath[300];
+    sprintf(fullpath, "%s/%s", path, file);
+
+    // Write object
+    if (write_file(fullpath, store, total_size) != 0) {
+        perror("write_file");
+        return 1;
+    }
+
+    printf("%s\n", hex);
+
+    free(content);
+    free(store);
     return 0;
 }
 

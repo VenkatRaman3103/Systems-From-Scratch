@@ -2,13 +2,12 @@ CC = gcc
 CFLAGS = -Wall -Wextra -std=c11
 TARGET = build/mygit
 
-SRC = src/main.c src/util.c
+SRC = src/main.c src/util.c src/hash.c
+LIBS = -lssl -lcrypto
 
 all:
 	mkdir -p build
-	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
+	$(CC) $(CFLAGS) $(SRC) -o $(TARGET) $(LIBS)
 
 clean:
-	rm -f $(TARGET)
-
-
+	rm -rf build
