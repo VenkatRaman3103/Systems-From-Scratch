@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef enum {
     SEMI,
@@ -33,6 +34,27 @@ typedef struct {
 
 } Token;
 
+// generating token
+// numbers
+
+TokenKeyword *generat_keyword(char curr, FILE *file) {
+    TokenKeyword *token = malloc(sizeof(TokenKeyword));
+    char *keyword = malloc(sizeof(char) * 4);
+
+    int keyword_index = 0;
+
+    while (isalpha(curr) && curr != EOF) {
+        keyword[keyword_index] = curr;
+        curr = fgetc(file);
+    }
+
+    if (strcmp(keyword, "exit")) {
+        token->type = EXIT;
+    }
+
+    return token;
+}
+
 TokenLiteral *generat_number(int curr, FILE *file) {
     TokenLiteral *token = malloc(sizeof(TokenLiteral));
     token->type = INT;
@@ -40,6 +62,12 @@ TokenLiteral *generat_number(int curr, FILE *file) {
     int val = 0;
 
     while (isdigit(curr) && curr != EOF) {
+        if (curr == '(') {
+            printf("found open paren\n");
+
+            break;
+        }
+
         val = (val * 10) + (curr - '0');
         curr = fgetc(file);
     }
@@ -66,7 +94,8 @@ void lexer(FILE *file) {
             TokenLiteral *test_token = generat_number(curr, file);
             printf("test_toke: %d\n", test_token->value);
         } else if (isalpha(curr)) {
-            printf("found CHARACTER: %c\n", curr);
+            TokenKeyword *test_keywod = generat_keyword(curr, file);
+            /* printf("found CHARACTER: %s\n", *test_keywod); */
         }
         curr = fgetc(file);
     }
